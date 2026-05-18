@@ -23,7 +23,9 @@
     "test": "vitest run",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "vrt": "playwright test --config playwright.vrt.config.ts",
+    "vrt:update": "playwright test --config playwright.vrt.config.ts --update-snapshots"
   },
   "dependencies": {
     "react": "19.2.6",
@@ -46,6 +48,7 @@
     "@types/react-dom": "19.2.3",
     "@vitest/browser-playwright": "^4.1.6",
     "@vitest/coverage-v8": "^4.1.6",
+    "http-server": "^14.1.1",
     "playwright": "^1.60.0",
     "storybook": "^10.4.0",
     "typescript": "6.0.3",

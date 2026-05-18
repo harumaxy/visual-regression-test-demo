@@ -1,0 +1,51 @@
+name: Visual Regression Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  vrt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Install Playwright browsers
+        run: bunx playwright install chromium --with-deps
+
+      - name: Build Storybook (all apps)
+        run: bun run build-storybook
+
+      # On main branch: generate baselines and commit them
+      - name: Update VRT baselines
+        if: github.ref == 'refs/heads/main'
+        run: bun run vrt:update
+
+      - name: Commit updated baselines
+        if: github.ref == 'refs/heads/main'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update VRT baselines [skip ci]"
+          file_pattern: "apps/*/vrt/__snapshots__/linux/*.png"
+
+      # On PRs: compare against committed baselines
+      - name: Run VRT
+        if: github.ref != 'refs/heads/main'
+        run: bun run vrt
+
+      - name: Upload VRT report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vrt-report
+          path: |
+            apps/*/playwright-report/
+            apps/*/test-results/
+          retention-days: 30
