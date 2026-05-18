@@ -41,7 +41,12 @@ remote: - 2 of 2 required status checks are expected.
     token: ${{ secrets.PAT }}
 ```
 
-`git-auto-commit-action` は checkout 時のトークンを引き継ぐので、これだけで push できる。PAT の所有者が管理者であればブランチ保護をバイパスできる。
+`git-auto-commit-action` は checkout 時のトークンを引き継ぐので、これだけで push できる。
+
+**重要: PAT だけでは不十分。** PAT はトークン所有者として振る舞うため、Rulesets の **Bypass list** にその所有者自身（または **Repository admin** ロール）を追加しないとブランチ保護をバイパスできない。
+
+- **Settings** → **Rules** → **Rulesets** → 該当ルール → **Bypass list** → **Add bypass**
+- PAT 所有者のアカウントを追加、または **Repository admin** ロールを追加
 
 #### 方法2: GitHub App — Organization・チーム開発向け
 
