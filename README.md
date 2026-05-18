@@ -268,6 +268,61 @@ PR           → build-storybook → vrt        → ベースラインと比較 
 
 ---
 
+## 用語集
+
+| 用語 | 意味 |
+|---|---|
+| VRT (Visual Regression Test) | スクリーンショットをベースライン画像と比較し、見た目の意図しない変更を検知するテスト |
+| ベースライン画像 | 「正」とするスクリーンショット。VRT はこの画像との差分で合否を判定する |
+| スモークテスト | 主要な導線だけ動くことを確認する軽量テスト。語源はハードウェアの「電源を入れて煙が出なければOK」から |
+| シャーディング | テストスイートを複数のマシンに分割して並列実行すること。Playwright が標準サポートしている |
+
+---
+
+## 調査メモ
+
+### Playwright ブラウザバイナリの CI 戦略
+
+CI で Playwright を使うには Chromium 等のブラウザバイナリ (~174MB) が必要になる。インストール方法として3つの選択肢を検証した。
+
+| 方法 | 仕組み | 結果 |
+|---|---|---|
+| **毎回ダウンロード（採用）** | `playwright install chromium --with-deps` | **47秒**。シンプルで公式推奨 |
+| actions/cache でキャッシュ | キャッシュ復元 + apt-get install-deps | Playwright 公式が非推奨。キャッシュ復元時間 ≒ ダウンロード時間で効果が薄い |
+| **Docker イメージ** | `mcr.microsoft.com/playwright` にブラウザがプリインストール済み | **59秒**。コンテナ初期化 (25s) + unzip (6s) のオーバーヘッドでむしろ遅い |
+
+Playwright 公式ドキュメント ([CI](https://playwright.dev/docs/ci)) より:
+
+> Caching browser binaries is not recommended, since the amount of time it takes to restore the cache is comparable to the time it takes to download the binaries.
+
+**結論: 小〜中規模では毎回ダウンロードが最もシンプルかつ高速。** Docker 版は `e2e-docker.yml` に資料として残してある（`workflow_dispatch` で手動実行のみ）。
+
+### E2E テストの実行頻度
+
+| タイミング | 推奨される実行内容 |
+|---|---|
+| 毎 push / PR | スモークテスト（主要パスのみ）またはテスト数が少なければフル実行 |
+| main マージ時 | フル E2E スイート |
+
+現状のテスト数 (2件、47秒) なら毎 push でフル実行しても問題ない。テストが増えて数分〜10分超になったら以下を検討する:
+
+- `paths` フィルターで関連ファイル変更時のみ実行
+- PR の draft 時はスキップ
+- シャーディングで並列化
+- スモークテストとフルテストの分離
+
+### GitHub Actions の無料枠
+
+| プラン | 月間無料枠 | 備考 |
+|---|---|---|
+| Free (public repo) | **無制限** | このリポジトリは public なので制限なし |
+| Free (private repo) | 2,000 分 | 47秒/回 × 3ワークフロー ≒ 2.5分/push |
+| Pro (private repo) | 3,000 分 | |
+
+public リポジトリでは GitHub Actions の実行時間を気にする必要はない。private リポジトリでも、1日10回 push × 20営業日 = 月500分程度で無料枠に収まる。
+
+---
+
 ## 既知の懸念: ベースライン画像によるリポジトリ肥大化
 
 VRT のベースライン画像 (PNG) は Git にコミットされるため、更新のたびに履歴が蓄積されリポジトリサイズが増加する。Git はバイナリファイルの差分を効率的に扱えないため、画像の枚数・更新頻度が増えると `.git` ディレクトリが肥大化する。
