@@ -4,6 +4,7 @@
   "workspaces": ["apps/*"],
   "scripts": {
     "test": "bun run --filter '*' test",
-    "build-storybook": "bun run --filter '*' build-storybook"
+    "build-storybook": "bun run --filter '*' build-storybook",
+    "e2e": "bun run --filter '*' e2e"
   }
 }
