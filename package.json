@@ -1,0 +1,5 @@
+{
+  "name": "visual-regression-test-demo",
+  "private": true,
+  "workspaces": ["apps/*"]
+}
