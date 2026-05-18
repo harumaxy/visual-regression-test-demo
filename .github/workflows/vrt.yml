@@ -21,7 +21,7 @@ jobs:
         run: bunx playwright install chromium --with-deps
 
       - name: Build Storybook (all apps)
-        run: bun run build-storybook -- --test --preview-only
+        run: bun run build-storybook -- --test --preview-only --disable-telemetry
 
       # On main branch: generate baselines and commit them
       - name: Update VRT baselines
